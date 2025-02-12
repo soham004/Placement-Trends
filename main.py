@@ -4,20 +4,11 @@ import plotly.express as px
 
 # Page configuration
 st.set_page_config(page_title="Placement Trends Analysis", layout="wide")
-# st.markdown(
-#     """
-#     <style>
-#         section[data-testid="stSidebar"] {
-#             width: 200px !important; # Set the width to your desired value
-#         }
-#     </style>
-#     """,
-#     unsafe_allow_html=True,
-# )
+
 # Load data
 @st.cache_data
 def load_data():
-    df = pd.read_csv('dataset/Placement.csv')
+    df = pd.read_csv('dataset/Placement_Data_Full_Class.csv')
     return df
 
 df = load_data()
@@ -34,7 +25,7 @@ if page == "Overview":
     
     with col1:
         total_students = len(df)
-        placed_students = len(df[df['PlacementStatus'] == 'Placed'])
+        placed_students = len(df[df['status'] == 'Placed'])
         placement_rate = (placed_students/total_students) * 100
         
         st.metric("Total Students", total_students)
@@ -42,7 +33,7 @@ if page == "Overview":
         st.metric("Placement Rate", f"{placement_rate:.2f}%")
     
     with col2:
-        fig = px.pie(df, names='PlacementStatus', title='Placement Status Distribution')
+        fig = px.pie(df, names='status', title='Placement Status Distribution')
         st.plotly_chart(fig)
 
 elif page == "Academic Analysis":
@@ -51,31 +42,24 @@ elif page == "Academic Analysis":
     col1, col2 = st.columns(2)
     
     with col1:
-        # CGPA Distribution
-        fig1 = px.histogram(df, x='CGPA', color='PlacementStatus',
-                          title='CGPA Distribution by Placement Status',
+        # SSC Percentage Distribution
+        fig1 = px.histogram(df, x='ssc_p', color='status',
+                          title='SSC Percentage Distribution by Placement Status',
                           barmode='group')
         st.plotly_chart(fig1)
     
     with col2:
-        # Academic Performance Trend
-        academic_metrics = ['SSC_Marks', 'HSC_Marks', 'CGPA']
-        avg_scores = df.groupby('PlacementStatus')[academic_metrics].mean().reset_index()
-        
-        # Create a long-format dataframe for plotting
-        avg_scores_melted = pd.melt(avg_scores, 
-                                  id_vars=['PlacementStatus'],
-                                  value_vars=academic_metrics,
-                                  var_name='Academic Metrics',
-                                  value_name='Average Score')
-        
-        fig2 = px.line(avg_scores_melted, 
-                      x='Academic Metrics', 
-                      y='Average Score',
-                      color='PlacementStatus',
-                      title='Academic Performance Trend',
-                      markers=True)
+        # HSC Percentage Distribution
+        fig2 = px.histogram(df, x='hsc_p', color='status',
+                          title='HSC Percentage Distribution by Placement Status',
+                          barmode='group')
         st.plotly_chart(fig2)
+    
+    # Degree Percentage Distribution
+    fig3 = px.histogram(df, x='degree_p', color='status',
+                      title='Degree Percentage Distribution by Placement Status',
+                      barmode='group')
+    st.plotly_chart(fig3)
 
 elif page == "Skills Analysis":
     st.title("🔧 Skills & Activities Analysis")
@@ -83,33 +67,24 @@ elif page == "Skills Analysis":
     col1, col2 = st.columns(2)
     
     with col1:
-        # Projects Distribution
-        fig1 = px.histogram(df, x='Projects', color='PlacementStatus', 
-                          title='Projects Distribution',
+        # Work Experience Distribution
+        fig1 = px.histogram(df, x='workex', color='status', 
+                          title='Work Experience Distribution by Placement Status',
                           barmode='group')
         st.plotly_chart(fig1)
     
     with col2:
-        # Internships Distribution
-        fig2 = px.histogram(df, x='Internships', color='PlacementStatus',
-                          title='Internships Distribution',
+        # E-test Percentage Distribution
+        fig2 = px.histogram(df, x='etest_p', color='status',
+                          title='E-test Percentage Distribution by Placement Status',
                           barmode='group')
         st.plotly_chart(fig2)
     
-    # Skills Distribution
-    col3, col4 = st.columns(2)
-    
-    with col3:
-        fig3 = px.histogram(df, x='SoftSkillsRating', color='PlacementStatus',
-                          title='Soft Skills Rating Distribution',
-                          barmode='group')
-        st.plotly_chart(fig3)
-    
-    with col4:
-        fig4 = px.histogram(df, x='AptitudeTestScore', color='PlacementStatus',
-                          title='Aptitude Test Score Distribution',
-                          barmode='group')
-        st.plotly_chart(fig4)
+    # MBA Percentage Distribution
+    fig3 = px.histogram(df, x='mba_p', color='status',
+                      title='MBA Percentage Distribution by Placement Status',
+                      barmode='group')
+    st.plotly_chart(fig3)
 
 else:  # Placement Statistics
     st.title("📊 Placement Statistics")
@@ -117,25 +92,25 @@ else:  # Placement Statistics
     col1, col2 = st.columns(2)
     
     with col1:
-        # Placement by Projects
-        projects_placement = df.groupby('Projects')['PlacementStatus'].value_counts().unstack()
-        fig1 = px.pie(names=projects_placement.index, 
-                     values=projects_placement['Placed'],
-                     title='Placement Distribution by Projects')
+        # Placement by Degree Specialization
+        degree_placement = df.groupby('degree_t')['status'].value_counts().unstack()
+        fig1 = px.pie(names=degree_placement.index, 
+                     values=degree_placement['Placed'],
+                     title='Placement Distribution by Degree Specialization')
         st.plotly_chart(fig1)
     
     with col2:
-        # Placement Rate Trend
-        placement_trend = df.groupby(['Projects', 'PlacementStatus']).size().unstack()
-        placement_rate = (placement_trend['Placed'] / (placement_trend['Placed'] + placement_trend['NotPlaced'])) * 100
+        # Placement Rate by Degree Specialization
+        placement_trend = df.groupby(['degree_t', 'status']).size().unstack()
+        placement_rate = (placement_trend['Placed'] / (placement_trend['Placed'] + placement_trend['Not Placed'])) * 100
         fig2 = px.line(x=placement_rate.index, y=placement_rate.values,
-                      title='Placement Rate Trend',
-                      labels={'x': 'Number of Projects', 'y': 'Placement Rate (%)'})
+                      title='Placement Rate by Degree Specialization',
+                      labels={'x': 'Degree Specialization', 'y': 'Placement Rate (%)'})
         st.plotly_chart(fig2)
 
-    # Workshops/Certifications Distribution
-    fig3 = px.histogram(df, x='Workshops/Certifications', color='PlacementStatus',
-                      title='Workshops/Certifications Distribution',
+    # Salary Distribution
+    fig3 = px.histogram(df[df['salary'].notnull()], x='salary', color='status',
+                      title='Salary Distribution by Placement Status',
                       barmode='group')
     st.plotly_chart(fig3)
 
@@ -144,6 +119,7 @@ st.markdown("---")
 st.markdown("### 📝 Notes")
 st.markdown("""
 - The analysis is based on the provided placement dataset
-- CGPA appears to be a significant factor in placement
-- Students with more projects and internships tend to have higher placement rates
+- Percentage in SSC, HSC, and Degree appears to be significant factors in placement
+- Degree specialization in Sci&Tech and Comm&Mgmt are much demanded by corporate
+- Students with work experience tend to have higher placement rates
 """)
